@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.idea/
+.vscode/
+*.swp
+*.swo
+*.log
+geckodriver.log
+allure-report/
+.DS_Store
