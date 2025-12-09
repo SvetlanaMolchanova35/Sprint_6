@@ -41,10 +41,23 @@ class OrderPage(BasePage):
     def click_next_button(self):
         self.click_element(self.NEXT_BUTTON)
     
-    def fill_rental_info(self, date=None, period="сутки", color="black", comment=""):
-        # Выбор даты (сегодняшняя)
+    def fill_rental_info(self, date_element_locator=None, period="сутки", color="black", comment=""):
+        """Заполнение информации об аренде
+        
+        Args:
+            date_element_locator: Локатор для выбора даты (если None, выбирается сегодняшняя)
+            period: Срок аренды
+            color: Цвет самоката
+            comment: Комментарий для курьера
+        """
+        # Выбор даты
         self.click_element(self.DATE_FIELD)
-        self.click_element(self.TODAY_DATE)
+        
+        if date_element_locator:
+            self.click_element(date_element_locator)
+        else:
+            # По умолчанию выбираем сегодняшнюю дату
+            self.click_element(self.TODAY_DATE)
         
         # Выбор срока аренды
         self.click_element(self.RENTAL_PERIOD_FIELD)

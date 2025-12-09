@@ -13,29 +13,21 @@ class TestFAQ:
         main_page.go_to_site()
         main_page.accept_cookies()
         
-        # Прокрутка до секции FAQ
-        faq_section = main_page.find_element(main_page.FAQ_SECTION)
-        driver.execute_script("arguments[0].scrollIntoView();", faq_section)
+        # Прокрутка до секции FAQ через Page Object
+        main_page.scroll_to_faq_section()
         
-        # Ожидание загрузки FAQ
-        import time
-        time.sleep(1)
-        
-        # Клик на вопрос через JavaScript (чтобы избежать перекрытия)
-        question_locator = main_page.FAQ_QUESTIONS[question_index]
-        question_element = main_page.find_element(question_locator)
-        
-        # Прокручиваем элемент в центр экрана
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", question_element)
-        time.sleep(0.5)
-        
-        # Клик через JavaScript
-        driver.execute_script("arguments[0].click();", question_element)
+        # Клик на вопрос через Page Object
+        main_page.click_faq_question(question_index)
         
         # Проверка отображения ответа
         assert main_page.is_faq_answer_displayed(question_index), \
             f"Ответ на вопрос {question_index + 1} не отображается"
         
-        # Проверка, что ответ не пустой
-        answer_text = main_page.get_faq_answer_text(question_index)
-        assert answer_text, f"Ответ на вопрос {question_index + 1} пустой"
+        # Проверка текста ответа
+        actual_answer = main_page.get_faq_answer_text(question_index)
+        expected_answer = main_page.FAQ_EXPECTED_ANSWERS[question_index]
+        
+        assert actual_answer == expected_answer, \
+            f"Неверный текст ответа на вопрос {question_index + 1}\n" \
+            f"Ожидалось: {expected_answer}\n" \
+            f"Получено: {actual_answer}"

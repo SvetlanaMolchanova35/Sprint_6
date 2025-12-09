@@ -29,10 +29,14 @@ class TestOrderScooter:
         }
     ]
     
-    @allure.title("Проверка заказа самоката через верхнюю кнопку")
+    @allure.title("Проверка заказа самоката")
     @allure.description("Полный флоу заказа с проверкой успешного подтверждения")
-    @pytest.mark.parametrize("order_data", TEST_DATA)
-    def test_order_scooter_via_top_button(self, driver, order_data):
+    @pytest.mark.parametrize("order_data, order_button", [
+        (TEST_DATA[0], "top"),
+        (TEST_DATA[1], "top"),
+        (TEST_DATA[0], "bottom")
+    ])
+    def test_order_scooter(self, driver, order_data, order_button):
         main_page = MainPage(driver)
         order_page = OrderPage(driver)
         
@@ -40,8 +44,11 @@ class TestOrderScooter:
         main_page.go_to_site()
         main_page.accept_cookies()
         
-        # Нажатие на верхнюю кнопку заказа
-        main_page.click_order_button_top()
+        # Нажатие на кнопку заказа (верхнюю или нижнюю)
+        if order_button == "top":
+            main_page.click_order_button_top()
+        else:
+            main_page.click_order_button_bottom()
         
         # Заполнение первой страницы заказа
         order_page.fill_personal_info(
@@ -69,41 +76,6 @@ class TestOrderScooter:
         success_text = order_page.get_success_message_text()
         assert "Заказ оформлен" in success_text, f"Неверное сообщение об успехе: {success_text}"
     
-    @allure.title("Проверка заказа самоката через нижнюю кнопку")
-    @allure.description("Полный флоу заказа с нижней точки входа")
-    @pytest.mark.parametrize("order_data", [TEST_DATA[0]])
-    def test_order_scooter_via_bottom_button(self, driver, order_data):
-        main_page = MainPage(driver)
-        order_page = OrderPage(driver)
-        
-        # Открытие главной страницы
-        main_page.go_to_site()
-        main_page.accept_cookies()
-        
-        # Нажатие на нижнюю кнопку заказа
-        main_page.click_order_button_bottom()
-        
-        # Заполнение первой страницы заказа
-        order_page.fill_personal_info(
-            order_data["name"],
-            order_data["surname"],
-            order_data["address"],
-            order_data["phone"]
-        )
-        order_page.click_next_button()
-        
-        # Заполнение второй страницы заказа
-        order_page.fill_rental_info(
-            period=order_data["period"],
-            color=order_data["color"],
-            comment=order_data["comment"]
-        )
-        order_page.click_order_button()
-        order_page.confirm_order()
-        
-        # Проверка успешного создания заказа
-        assert order_page.is_success_message_displayed(), "Модальное окно успеха не отображается"
-    
     @allure.title("Проверка перехода на главную страницу через логотип Самоката")
     def test_scooter_logo_redirect(self, driver):
         main_page = MainPage(driver)
@@ -114,10 +86,6 @@ class TestOrderScooter:
         
         # Переход на страницу заказа и обратно через логотип
         main_page.click_order_button_top()
-        
-        # Добавляем небольшую паузу перед кликом на логотип
-        time.sleep(1)
-        
         main_page.click_scooter_logo()
         
         # Проверка, что вернулись на главную страницу
@@ -136,31 +104,18 @@ class TestOrderScooter:
         main_page.click_yandex_logo()
         
         # Ожидание открытия нового окна
-        time.sleep(3)  # Даем время для открытия нового окна
+        time.sleep(3)
         
         # Переключение на новое окно
         all_windows = driver.window_handles
+        new_window = [window for window in all_windows if window != main_window][0]
+        driver.switch_to.window(new_window)
         
-        if len(all_windows) > 1:
-            new_window = [window for window in all_windows if window != main_window][0]
-            driver.switch_to.window(new_window)
-            
-            # Даем время для загрузки страницы
-            time.sleep(2)
-            
-            # Проверка, что открылась страница Яндекса или Дзена
-            current_url = driver.current_url
-            print(f"Открытый URL: {current_url}")
-            
-            # Проверяем различные возможные URL
-            assert any(domain in current_url for domain in ['dzen.ru', 'yandex.ru', 'ya.ru']), \
-                f"Не открылась страница Яндекса/Дзена. URL: {current_url}"
-            
-            # Закрываем новое окно и возвращаемся к основному
-            driver.close()
-            driver.switch_to.window(main_window)
-        else:
-            # Если новое окно не открылось, проверяем текущий URL
-            current_url = driver.current_url
-            print(f"Новое окно не открылось. Текущий URL: {current_url}")
-            assert False, "Не открылось новое окно после клика на логотип Яндекса"
+        # Проверка, что открылась страница Яндекса или Дзена
+        current_url = driver.current_url
+        assert any(domain in current_url for domain in ['dzen.ru', 'yandex.ru', 'ya.ru']), \
+            f"Не открылась страница Яндекса/Дзена. URL: {current_url}"
+        
+        # Закрываем новое окно и возвращаемся к основному
+        driver.close()
+        driver.switch_to.window(main_window)

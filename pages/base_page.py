@@ -4,9 +4,10 @@ from selenium.common.exceptions import TimeoutException
 
 
 class BasePage:
+    BASE_URL = "https://qa-scooter.praktikum-services.ru/"
+    
     def __init__(self, driver):
         self.driver = driver
-        self.base_url = "https://qa-scooter.praktikum-services.ru/"
 
     def find_element(self, locator, time=10):
         return WebDriverWait(self.driver, time).until(
@@ -21,7 +22,7 @@ class BasePage:
         )
 
     def go_to_site(self):
-        return self.driver.get(self.base_url)
+        return self.driver.get(self.BASE_URL)
 
     def click_element(self, locator):
         element = self.find_element(locator)
@@ -43,3 +44,24 @@ class BasePage:
             return True
         except TimeoutException:
             return False
+
+    def scroll_to_element(self, locator_or_element):
+        """Прокрутка к элементу"""
+        if isinstance(locator_or_element, tuple):
+            element = self.find_element(locator_or_element)
+        else:
+            element = locator_or_element
+        
+        self.driver.execute_script("arguments[0].scrollIntoView();", element)
+        return element
+
+    def click_element_with_js(self, locator):
+        """Клик через JavaScript"""
+        element = self.find_element(locator)
+        self.driver.execute_script("arguments[0].click();", element)
+
+    def wait_for_element_to_be_clickable(self, locator, timeout=10):
+        """Ожидание кликабельности элемента"""
+        return WebDriverWait(self.driver, timeout).until(
+            EC.element_to_be_clickable(locator)
+        )

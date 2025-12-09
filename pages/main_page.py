@@ -35,8 +35,20 @@ class MainPage(BasePage):
     SCOOTER_LOGO = (By.XPATH, "//a[@class='Header_LogoScooter__3lsAR']")
     YANDEX_LOGO = (By.XPATH, "//a[@class='Header_LogoYandex__3TSOI']")
     
-    # Кнопка принятия куки (если есть)
+    # Кнопка принятия куки
     COOKIE_BUTTON = (By.ID, "rcc-confirm-button")
+    
+    # Ожидаемые тексты ответов FAQ
+    FAQ_EXPECTED_ANSWERS = [
+        "Сутки — 400 рублей. Оплата курьеру — наличными или картой.",
+        "Пока что у нас так: один заказ — один самокат. Если хотите покататься с друзьями, можете просто сделать несколько заказов — один за другим.",
+        "Допустим, вы оформляете заказ на 8 мая. Мы привозим самокат 8 мая в течение дня. Отсчёт времени аренды начинается с момента, когда вы оплатите заказ курьеру. Если мы привезли самокат 8 мая в 20:30, суточная аренда закончится 9 мая в 20:30.",
+        "Только начиная с завтрашнего дня. Но скоро станем расторопнее.",
+        "Пока что нет! Но если что-то срочное — всегда можно позвонить в поддержку по красивому номеру 1010.",
+        "Самокат приезжает к вам с полной зарядкой. Этого хватает на восемь суток — даже если будете кататься без передышек и во сне. Зарядка не понадобится.",
+        "Да, пока самокат не привезли. Штрафа не будет, объяснительной записки тоже не попросим. Все же свои.",
+        "Да, обязательно. Всем самокатов! И Москве, и Московской области."
+    ]
     
     def accept_cookies(self):
         if self.is_element_visible(self.COOKIE_BUTTON):
@@ -44,13 +56,8 @@ class MainPage(BasePage):
     
     def click_faq_question(self, question_index):
         question_locator = self.FAQ_QUESTIONS[question_index]
-        question_element = self.find_element(question_locator)
-        
-        # Прокручиваем элемент в центр экрана
-        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", question_element)
-        
-        # Клик через JavaScript для надежности
-        self.driver.execute_script("arguments[0].click();", question_element)
+        self.wait_for_element_to_be_clickable(question_locator)
+        self.click_element_with_js(question_locator)
     
     def get_faq_answer_text(self, answer_index):
         answer_locator = self.FAQ_ANSWERS[answer_index]
@@ -65,24 +72,20 @@ class MainPage(BasePage):
         self.click_element(self.ORDER_BUTTON_TOP)
     
     def click_order_button_bottom(self):
-        # Прокрутка к нижней кнопке
-        button = self.find_element(self.ORDER_BUTTON_BOTTOM)
-        self.driver.execute_script("arguments[0].scrollIntoView();", button)
-        
-        # Небольшая пауза для стабилизации
-        import time
-        time.sleep(0.5)
-        
-        # Клик через JavaScript для надежности
-        self.driver.execute_script("arguments[0].click();", button)
+        # Прокрутка и клик через методы BasePage
+        button = self.scroll_to_element(self.ORDER_BUTTON_BOTTOM)
+        self.wait_for_element_to_be_clickable(self.ORDER_BUTTON_BOTTOM)
+        self.click_element_with_js(self.ORDER_BUTTON_BOTTOM)
     
     def click_scooter_logo(self):
         self.click_element(self.SCOOTER_LOGO)
     
     def click_yandex_logo(self):
-        # Клик через JavaScript для надежности
-        yandex_logo_element = self.find_element(self.YANDEX_LOGO)
-        self.driver.execute_script("arguments[0].click();", yandex_logo_element)
+        self.click_element_with_js(self.YANDEX_LOGO)
     
     def is_main_page_displayed(self):
         return self.is_element_visible(self.ORDER_BUTTON_TOP)
+    
+    def scroll_to_faq_section(self):
+        """Прокрутка к секции FAQ"""
+        return self.scroll_to_element(self.FAQ_SECTION)
