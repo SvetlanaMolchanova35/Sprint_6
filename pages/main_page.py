@@ -1,5 +1,6 @@
 from selenium.webdriver.common.by import By
 from .base_page import BasePage
+import allure
 
 
 class MainPage(BasePage):
@@ -50,42 +51,50 @@ class MainPage(BasePage):
         "Да, обязательно. Всем самокатов! И Москве, и Московской области."
     ]
     
+    @allure.step("Принять куки")
     def accept_cookies(self):
         if self.is_element_visible(self.COOKIE_BUTTON):
             self.click_element(self.COOKIE_BUTTON)
     
+    @allure.step("Кликнуть на вопрос FAQ")
     def click_faq_question(self, question_index):
         question_locator = self.FAQ_QUESTIONS[question_index]
         self.wait_for_element_to_be_clickable(question_locator)
         self.click_element_with_js(question_locator)
     
+    @allure.step("Получить текст ответа FAQ")
     def get_faq_answer_text(self, answer_index):
         answer_locator = self.FAQ_ANSWERS[answer_index]
         answer_element = self.find_element(answer_locator)
         return answer_element.text
     
+    @allure.step("Проверить отображение ответа FAQ")
     def is_faq_answer_displayed(self, answer_index):
         answer_locator = self.FAQ_ANSWERS[answer_index]
         return self.is_element_visible(answer_locator)
     
+    @allure.step("Кликнуть на верхнюю кнопку заказа")
     def click_order_button_top(self):
         self.click_element(self.ORDER_BUTTON_TOP)
     
+    @allure.step("Кликнуть на нижнюю кнопку заказа")
     def click_order_button_bottom(self):
-        # Прокрутка и клик через методы BasePage
         button = self.scroll_to_element(self.ORDER_BUTTON_BOTTOM)
         self.wait_for_element_to_be_clickable(self.ORDER_BUTTON_BOTTOM)
         self.click_element_with_js(self.ORDER_BUTTON_BOTTOM)
     
+    @allure.step("Кликнуть на логотип Самоката")
     def click_scooter_logo(self):
         self.click_element(self.SCOOTER_LOGO)
     
+    @allure.step("Кликнуть на логотип Яндекса")
     def click_yandex_logo(self):
         self.click_element_with_js(self.YANDEX_LOGO)
     
+    @allure.step("Проверить отображение главной страницы")
     def is_main_page_displayed(self):
         return self.is_element_visible(self.ORDER_BUTTON_TOP)
     
+    @allure.step("Прокрутить к секции FAQ")
     def scroll_to_faq_section(self):
-        """Прокрутка к секции FAQ"""
         return self.scroll_to_element(self.FAQ_SECTION)

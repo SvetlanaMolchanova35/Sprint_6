@@ -1,6 +1,7 @@
 import pytest
 import allure
-import time
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from pages.main_page import MainPage
 from pages.order_page import OrderPage
 
@@ -98,24 +99,38 @@ class TestOrderScooter:
         main_page.accept_cookies()
         
         # Сохраняем идентификатор текущего окна
-        main_window = driver.current_window_handle
+        main_window = main_page.get_current_window_handle()
+        
+        # Получаем текущие окна до клика
+        windows_before = main_page.get_window_handles()
         
         # Клик на логотип Яндекса
         main_page.click_yandex_logo()
         
-        # Ожидание открытия нового окна
-        time.sleep(3)
+        # Ожидание открытия нового окна (без time.sleep!)
+        WebDriverWait(driver, 10).until(
+            EC.number_of_windows_to_be(len(windows_before) + 1)
+        )
         
-        # Переключение на новое окно
-        all_windows = driver.window_handles
-        new_window = [window for window in all_windows if window != main_window][0]
-        driver.switch_to.window(new_window)
+        # Получаем все окна после клика
+        windows_after = main_page.get_window_handles()
         
-        # Проверка, что открылась страница Яндекса или Дзена
-        current_url = driver.current_url
+        # Находим новое окно
+        new_window = [window for window in windows_after if window not in windows_before][0]
+        
+        # Переключаемся на новое окно
+        main_page.switch_to_window(new_window)
+        
+        # Ожидаем загрузки страницы (не about:blank)
+        WebDriverWait(driver, 10).until(
+            lambda d: d.current_url not in ['about:blank', '']
+        )
+        
+        # Проверяем URL
+        current_url = main_page.get_current_url()
         assert any(domain in current_url for domain in ['dzen.ru', 'yandex.ru', 'ya.ru']), \
             f"Не открылась страница Яндекса/Дзена. URL: {current_url}"
         
         # Закрываем новое окно и возвращаемся к основному
-        driver.close()
-        driver.switch_to.window(main_window)
+        main_page.close_current_window()
+        main_page.switch_to_window(main_window)

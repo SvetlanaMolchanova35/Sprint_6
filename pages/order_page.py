@@ -1,5 +1,6 @@
 from selenium.webdriver.common.by import By
 from .base_page import BasePage
+import allure
 
 
 class OrderPage(BasePage):
@@ -27,6 +28,7 @@ class OrderPage(BasePage):
     SUCCESS_MODAL = (By.XPATH, "//div[contains(@class, 'Order_Modal__')]")
     SUCCESS_MESSAGE = (By.XPATH, "//div[contains(@class, 'Order_ModalHeader')]")
     
+    @allure.step("Заполнить личную информацию")
     def fill_personal_info(self, name, surname, address, phone):
         self.fill_field(self.NAME_FIELD, name)
         self.fill_field(self.SURNAME_FIELD, surname)
@@ -38,18 +40,12 @@ class OrderPage(BasePage):
         
         self.fill_field(self.PHONE_FIELD, phone)
     
+    @allure.step("Нажать кнопку 'Далее'")
     def click_next_button(self):
         self.click_element(self.NEXT_BUTTON)
     
+    @allure.step("Заполнить информацию об аренде")
     def fill_rental_info(self, date_element_locator=None, period="сутки", color="black", comment=""):
-        """Заполнение информации об аренде
-        
-        Args:
-            date_element_locator: Локатор для выбора даты (если None, выбирается сегодняшняя)
-            period: Срок аренды
-            color: Цвет самоката
-            comment: Комментарий для курьера
-        """
         # Выбор даты
         self.click_element(self.DATE_FIELD)
         
@@ -74,15 +70,19 @@ class OrderPage(BasePage):
         if comment:
             self.fill_field(self.COMMENT_FIELD, comment)
     
+    @allure.step("Нажать кнопку 'Заказать'")
     def click_order_button(self):
         self.click_element(self.ORDER_BUTTON)
     
+    @allure.step("Подтвердить заказ")
     def confirm_order(self):
         self.click_element(self.CONFIRM_BUTTON)
     
+    @allure.step("Проверить отображение сообщения об успехе")
     def is_success_message_displayed(self):
         return self.is_element_visible(self.SUCCESS_MODAL)
     
+    @allure.step("Получить текст сообщения об успехе")
     def get_success_message_text(self):
         element = self.find_element(self.SUCCESS_MESSAGE)
         return element.text
