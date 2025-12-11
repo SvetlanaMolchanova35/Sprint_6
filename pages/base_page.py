@@ -1,7 +1,6 @@
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-import allure
 
 
 class BasePage:
@@ -10,42 +9,35 @@ class BasePage:
     def __init__(self, driver):
         self.driver = driver
 
-    @allure.step("Найти элемент")
     def find_element(self, locator, time=10):
         return WebDriverWait(self.driver, time).until(
             EC.presence_of_element_located(locator),
             message=f"Can't find element by locator {locator}"
         )
 
-    @allure.step("Найти элементы")
     def find_elements(self, locator, time=10):
         return WebDriverWait(self.driver, time).until(
             EC.presence_of_all_elements_located(locator),
             message=f"Can't find elements by locator {locator}"
         )
 
-    @allure.step("Перейти на сайт")
     def go_to_site(self):
         return self.driver.get(self.BASE_URL)
 
-    @allure.step("Кликнуть на элемент")
     def click_element(self, locator):
-        element = self.find_element(locator)
+        element = self.wait_for_element_to_be_clickable(locator)
         element.click()
 
-    @allure.step("Заполнить поле")
     def fill_field(self, locator, text):
         element = self.find_element(locator)
         element.clear()
         element.send_keys(text)
 
-    @allure.step("Ожидать видимости элемента")
     def wait_for_element_visibility(self, locator, timeout=10):
         return WebDriverWait(self.driver, timeout).until(
             EC.visibility_of_element_located(locator)
         )
 
-    @allure.step("Проверить видимость элемента")
     def is_element_visible(self, locator, timeout=5):
         try:
             self.wait_for_element_visibility(locator, timeout)
@@ -53,8 +45,8 @@ class BasePage:
         except TimeoutException:
             return False
 
-    @allure.step("Прокрутить к элементу")
     def scroll_to_element(self, locator_or_element):
+        """Прокрутка к элементу"""
         if isinstance(locator_or_element, tuple):
             element = self.find_element(locator_or_element)
         else:
@@ -63,42 +55,51 @@ class BasePage:
         self.driver.execute_script("arguments[0].scrollIntoView();", element)
         return element
 
-    @allure.step("Кликнуть через JavaScript")
     def click_element_with_js(self, locator):
+        """Клик через JavaScript"""
         element = self.find_element(locator)
         self.driver.execute_script("arguments[0].click();", element)
 
-    @allure.step("Ожидать кликабельности элемента")
     def wait_for_element_to_be_clickable(self, locator, timeout=10):
+        """Ожидание кликабельности элемента"""
         return WebDriverWait(self.driver, timeout).until(
             EC.element_to_be_clickable(locator)
         )
-
-    @allure.step("Получить текущее окно")
-    def get_current_window_handle(self):
-        return self.driver.current_window_handle
-
-    @allure.step("Получить все окна")
-    def get_window_handles(self):
-        return self.driver.window_handles
-
-    @allure.step("Переключиться на окно")
-    def switch_to_window(self, window_handle):
-        self.driver.switch_to.window(window_handle)
-
-    @allure.step("Закрыть текущее окно")
-    def close_current_window(self):
-        self.driver.close()
-
-    @allure.step("Получить текущий URL")
-    def get_current_url(self):
-        return self.driver.current_url
-
-    @allure.step("Дождаться нового окна")
-    def wait_for_new_window(self, timeout=10):
-        """Дождаться открытия нового окна"""
-        current_windows = self.get_window_handles()
+    
+    def wait_for_new_window(self, current_windows, timeout=10):
+        """Ожидание открытия нового окна"""
         WebDriverWait(self.driver, timeout).until(
             lambda driver: len(driver.window_handles) > len(current_windows)
         )
-        return self.get_window_handles()
+    
+    def switch_to_new_window(self, current_window_handle):
+        """Переключение на новое окно"""
+        # Ждем открытия нового окна
+        self.wait_for_new_window([current_window_handle])
+        
+        # Находим новое окно
+        all_windows = self.driver.window_handles
+        new_window = [window for window in all_windows if window != current_window_handle][0]
+        
+        # Переключаемся
+        self.driver.switch_to.window(new_window)
+        return new_window
+    
+    def close_current_window_and_switch_to(self, window_handle):
+        """Закрытие текущего окна и переключение на указанное"""
+        self.driver.close()
+        self.driver.switch_to.window(window_handle)
+    
+    def wait_for_url_contains(self, text, timeout=10):
+        """Ожидание, что URL содержит определенный текст"""
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                EC.url_contains(text)
+            )
+            return True
+        except TimeoutException:
+            return False
+    
+    def get_current_url(self):
+        """Получение текущего URL"""
+        return self.driver.current_url

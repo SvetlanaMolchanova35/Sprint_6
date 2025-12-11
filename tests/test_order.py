@@ -1,7 +1,5 @@
 import pytest
 import allure
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from pages.main_page import MainPage
 from pages.order_page import OrderPage
 
@@ -99,38 +97,13 @@ class TestOrderScooter:
         main_page.accept_cookies()
         
         # Сохраняем идентификатор текущего окна
-        main_window = main_page.get_current_window_handle()
+        main_window = driver.current_window_handle
         
-        # Получаем текущие окна до клика
-        windows_before = main_page.get_window_handles()
+        # Клик на логотип Яндекса с ожиданием нового окна
+        main_page.click_yandex_logo_and_wait_for_new_window(main_window)
         
-        # Клик на логотип Яндекса
-        main_page.click_yandex_logo()
-        
-        # Ожидание открытия нового окна (без time.sleep!)
-        WebDriverWait(driver, 10).until(
-            EC.number_of_windows_to_be(len(windows_before) + 1)
-        )
-        
-        # Получаем все окна после клика
-        windows_after = main_page.get_window_handles()
-        
-        # Находим новое окно
-        new_window = [window for window in windows_after if window not in windows_before][0]
-        
-        # Переключаемся на новое окно
-        main_page.switch_to_window(new_window)
-        
-        # Ожидаем загрузки страницы (не about:blank)
-        WebDriverWait(driver, 10).until(
-            lambda d: d.current_url not in ['about:blank', '']
-        )
-        
-        # Проверяем URL
-        current_url = main_page.get_current_url()
-        assert any(domain in current_url for domain in ['dzen.ru', 'yandex.ru', 'ya.ru']), \
-            f"Не открылась страница Яндекса/Дзена. URL: {current_url}"
+        # Проверка, что открылась страница Яндекса или Дзена
+        assert main_page.check_yandex_redirect_url(), "Не открылась страница Яндекса/Дзена"
         
         # Закрываем новое окно и возвращаемся к основному
-        main_page.close_current_window()
-        main_page.switch_to_window(main_window)
+        main_page.close_current_window_and_switch_to(main_window)
